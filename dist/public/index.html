@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToDo List</title>
+    <style>
+        .completed {
+            text-decoration: line-through;
+        }
+    </style>
+</head>
+<body>
+    <h1>ToDo List</h1>
+    <ul id="todo-list"></ul>
+    <form id="todo-form">
+        <input type="text" id="todo-title" placeholder="Enter Todo Title">
+        <button type="submit">Add Todo</button>
+    </form>
+
+    <script>
+        async function fetchTodos() {
+            const response = await fetch('/todos');
+            const todos = await response.json();
+            const todoList = document.getElementById('todo-list');
+            todoList.innerHTML = '';
+            todos.forEach(todo => {
+                const li = document.createElement('li');
+                li.textContent = todo.title;
+                if (todo.completed) {
+                    li.classList.add('completed');
+                }
+                li.addEventListener('click', async () => {
+                    const updatedTodo = {
+                        completed: !todo.completed
+                    };
+                    await fetch(`/todos/${todo._id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(updatedTodo)
+                    });
+                    fetchTodos();
+                });
+                todoList.appendChild(li);
+            });
+        }
+
+        async function addTodo() {
+            const titleInput = document.getElementById('todo-title');
+            const title = titleInput.value.trim();
+            if (title === '') return;
+            await fetch('/todos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title })
+            });
+            titleInput.value = '';
+            fetchTodos();
+        }
+
+        document.getElementById('todo-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            addTodo();
+        });
+
+        fetchTodos();
+    </script>
+</body>
+</html>
